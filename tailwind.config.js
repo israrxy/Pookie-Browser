@@ -1,0 +1,1 @@
+/** @type {import('tailwindcss').Config} */\nexport default {\n  darkMode: 'class',\n  content: ['./index.html', './src/**/*.{ts,tsx}'],\n  theme: {\n    extend: {\n      colors: {\n        glass: 'rgba(17, 24, 39, 0.6)'\n      },\n      backdropBlur: {\n        xs: '2px'\n      }\n    }\n  },\n  plugins: []\n};\n
