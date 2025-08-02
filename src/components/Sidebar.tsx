@@ -7,17 +7,15 @@ import TabItem from "./TabItem";
 type ContextPos = { x: number; y: number; tabId: string } | null;
 
 export default function Sidebar() {
-  const { tabs, activeId, addTab, closeTab, duplicateTab, switchTab, sidebarWidth, setSidebarWidth } =
-    useTabsStore((s) => ({
-      tabs: s.tabs,
-      activeId: s.activeId,
-      addTab: s.addTab,
-      closeTab: s.closeTab,
-      duplicateTab: s.duplicateTab,
-      switchTab: s.switchTab,
-      sidebarWidth: s.sidebarWidth,
-      setSidebarWidth: s.setSidebarWidth,
-    }));
+  // Select granular slices to avoid unnecessary re-renders that can thrash React 19's external store subscriptions.
+  const tabs = useTabsStore((s) => s.tabs);
+  const activeId = useTabsStore((s) => s.activeId);
+  const addTab = useTabsStore((s) => s.addTab);
+  const closeTab = useTabsStore((s) => s.closeTab);
+  const duplicateTab = useTabsStore((s) => s.duplicateTab);
+  const switchTab = useTabsStore((s) => s.switchTab);
+  const sidebarWidth = useTabsStore((s) => s.sidebarWidth);
+  const setSidebarWidth = useTabsStore((s) => s.setSidebarWidth);
 
   const [context, setContext] = useState<ContextPos>(null);
   const resizerRef = useRef<HTMLDivElement>(null);

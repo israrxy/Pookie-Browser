@@ -6,12 +6,11 @@ import { ArrowRight, RefreshCw, Shield, Moon, Sun } from "lucide-react";
 import classNames from "classnames";
 
 function AddressBar() {
-  const { tabs, activeId, updateTab, addTab } = useTabsStore((s) => ({
-    tabs: s.tabs,
-    activeId: s.activeId,
-    updateTab: s.updateTab,
-    addTab: s.addTab,
-  }));
+  // Use granular selectors to avoid recreating objects each render
+  const tabs = useTabsStore((s) => s.tabs);
+  const activeId = useTabsStore((s) => s.activeId);
+  const updateTab = useTabsStore((s) => s.updateTab);
+  const addTab = useTabsStore((s) => s.addTab);
   const active = tabs.find((t) => t.id === activeId) ?? null;
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -64,10 +63,9 @@ function AddressBar() {
 }
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTabsStore((s) => ({
-    theme: s.theme,
-    setTheme: s.setTheme,
-  }));
+  // Select granular slices to avoid re-renders causing external store re-subscription churn
+  const theme = useTabsStore((s) => s.theme);
+  const setTheme = useTabsStore((s) => s.setTheme);
   const isDark = theme !== "light";
   return (
     <button
@@ -82,14 +80,15 @@ function ThemeToggle() {
 }
 
 export default function App() {
-  const { load, theme } = useTabsStore((s) => ({
-    load: s.load,
-    theme: s.theme,
-  }));
+  // Select individually to avoid unstable selector objects
+  const load = useTabsStore((s) => s.load);
+  const theme = useTabsStore((s) => s.theme);
 
+  // Hydrate state once on mount to avoid subscription thrash with React 19
   useEffect(() => {
     load();
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;

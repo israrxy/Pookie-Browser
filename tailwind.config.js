@@ -1,1 +1,16 @@
-/** @type {import('tailwindcss').Config} */\nexport default {\n  darkMode: 'class',\n  content: ['./index.html', './src/**/*.{ts,tsx}'],\n  theme: {\n    extend: {\n      colors: {\n        glass: 'rgba(17, 24, 39, 0.6)'\n      },\n      backdropBlur: {\n        xs: '2px'\n      }\n    }\n  },\n  plugins: []\n};\n
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: 'class',
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        glass: 'rgba(17, 24, 39, 0.6)'
+      },
+      backdropBlur: {
+        xs: '2px'
+      }
+    }
+  },
+  plugins: []
+};

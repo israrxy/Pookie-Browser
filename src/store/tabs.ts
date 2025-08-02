@@ -31,8 +31,6 @@ const STORAGE_KEY = "pookie.tabs.v1";
 
 const sampleTabs: Tab[] = [
   { id: crypto.randomUUID(), title: "Start", url: "about:home", favicon: null },
-  { id: crypto.randomUUID(), title: "MDN", url: "https://developer.mozilla.org/", favicon: null },
-  { id: crypto.randomUUID(), title: "GitHub", url: "https://github.com/", favicon: null },
 ];
 
 export const useTabsStore = create<TabsState>((set, get) => ({
@@ -41,18 +39,21 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   sidebarWidth: 280,
   theme: "dark",
   useWebview: false,
-  addTab: (partial) => {
-    const tab: Tab = {
-      id: crypto.randomUUID(),
-      title: partial?.title ?? "New Tab",
-      url: partial?.url ?? "about:home",
-      favicon: null,
-      incognito: !!partial?.incognito,
-    };
-    set((s) => ({ tabs: [...s.tabs, tab], activeId: tab.id }));
-    persist();
-  },
-  closeTab: (id) => {
+
+  addTab: (partial) =>
+    set((s) => {
+      const tab: Tab = {
+        id: crypto.randomUUID(),
+        title: partial?.title ?? "New Tab",
+        url: partial?.url ?? "about:home",
+        favicon: null,
+        incognito: !!partial?.incognito,
+      };
+      // no-op update if identical to prevent redundant notifications
+      return { tabs: [...s.tabs, tab], activeId: tab.id };
+    }),
+
+  closeTab: (id) =>
     set((s) => {
       const idx = s.tabs.findIndex((t) => t.id === id);
       if (idx === -1) return s;
@@ -63,39 +64,87 @@ export const useTabsStore = create<TabsState>((set, get) => ({
         nextActive = fallback ? fallback.id : null;
       }
       return { tabs: nextTabs, activeId: nextActive };
-    });
-    persist();
-  },
-  duplicateTab: (id) => {
-    const t = get().tabs.find((x) => x.id === id);
-    if (!t) return;
-    const dup: Tab = { ...t, id: crypto.randomUUID() };
-    set((s) => ({ tabs: [...s.tabs, dup], activeId: dup.id }));
-    persist();
-  },
-  switchTab: (id) => set({ activeId: id }),
-  updateTab: (id, patch) => {
-    set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
-    persist();
-  },
-  setSidebarWidth: (w) => set({ sidebarWidth: Math.min(420, Math.max(200, w)) }),
-  setTheme: (t) => {
-    set({ theme: t });
-    persist();
-  },
-  setUseWebview: (v) => set({ useWebview: v }),
+    }),
+
+  duplicateTab: (id) =>
+    set((s) => {
+      const t = s.tabs.find((x) => x.id === id);
+      if (!t) return s;
+      const dup: Tab = { ...t, id: crypto.randomUUID() };
+      return { tabs: [...s.tabs, dup], activeId: dup.id };
+    }),
+
+  switchTab: (id) =>
+    set((s) => (s.activeId === id ? s : { activeId: id })),
+
+  updateTab: (id, patch) =>
+    set((s) => {
+      let changed = false;
+      const next = s.tabs.map((t) => {
+        if (t.id !== id) return t;
+        const merged = { ...t, ...patch };
+        if (
+          merged.title !== t.title ||
+          merged.url !== t.url ||
+          merged.favicon !== t.favicon ||
+          merged.incognito !== t.incognito
+        ) {
+          changed = true;
+        }
+        return merged;
+      });
+      return changed ? { tabs: next } : s;
+    }),
+
+  setSidebarWidth: (w) =>
+    set((s) => {
+      const clamped = Math.min(420, Math.max(200, w));
+      return s.sidebarWidth === clamped ? s : { sidebarWidth: clamped };
+    }),
+
+  setTheme: (t) =>
+    set((s) => (s.theme === t ? s : { theme: t })),
+
+  setUseWebview: (v) =>
+    set((s) => (s.useWebview === v ? s : { useWebview: v })),
+
   load: () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw);
-      set({
-        tabs: saved.tabs?.length ? saved.tabs : sampleTabs,
-        activeId: saved.activeId ?? saved.tabs?.[0]?.id ?? sampleTabs[0].id,
-        sidebarWidth: saved.sidebarWidth ?? 280,
-        theme: saved.theme ?? "dark",
+      const nextTabs =
+        Array.isArray(saved.tabs) && saved.tabs.length ? saved.tabs : sampleTabs;
+      const nextActive =
+        typeof saved.activeId === "string" &&
+        nextTabs.some((t: Tab) => t.id === saved.activeId)
+          ? saved.activeId
+          : nextTabs[0].id;
+      const nextSidebar =
+        typeof saved.sidebarWidth === "number" ? saved.sidebarWidth : 280;
+      const nextTheme: Theme =
+        saved.theme === "light" || saved.theme === "frosted" ? saved.theme : "dark";
+
+      set((s) => {
+        // Avoid redundant notify if nothing changes
+        if (
+          s.tabs === nextTabs &&
+          s.activeId === nextActive &&
+          s.sidebarWidth === nextSidebar &&
+          s.theme === nextTheme
+        ) {
+          return s;
+        }
+        return {
+          tabs: nextTabs,
+          activeId: nextActive,
+          sidebarWidth: nextSidebar,
+          theme: nextTheme,
+        };
       });
-    } catch {}
+    } catch {
+      set((s) => s); // no-op
+    }
   },
 }));
 
