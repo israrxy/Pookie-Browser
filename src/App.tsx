@@ -121,7 +121,7 @@ export default function App() {
                 <AddressBar />
               </div>
             </header>
-            <section className="flex-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+            <section className="flex-1 overflow-hidden">
               <BrowserView />
             </section>
           </div>
