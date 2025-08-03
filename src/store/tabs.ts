@@ -29,6 +29,9 @@ type TabsState = {
 
 const STORAGE_KEY = "pookie.tabs.v1";
 
+// Check if we're running in Electron
+const isElectron = typeof window !== 'undefined' && !!(window as any).electron;
+
 const sampleTabs: Tab[] = [
   { id: crypto.randomUUID(), title: "Start", url: "about:home", favicon: null },
 ];
@@ -38,7 +41,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   activeId: sampleTabs[0].id,
   sidebarWidth: 280,
   theme: "dark",
-  useWebview: false,
+  useWebview: !!isElectron,
 
   addTab: (partial) =>
     set((s) => {
